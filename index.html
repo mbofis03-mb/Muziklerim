@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#121212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SoundSpace — Müzik Portfolyom</title>
+<link rel="manifest" href="#"> <!-- PWA manifest -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Circular+Std:wght@400;500;700&family=DM+Sans:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ===================== CSS VARIABLES ===================== */
+  :root {
+    --bg-base: #121212;
+    --bg-elevated: #1A1A1A;
+    --bg-highlight: #282828;
+    --bg-press: #000;
+    --bg-sidebar: #000;
+    --bg-player: #181818;
+    --text-base: #FFFFFF;
+    --text-subdued: #B3B3B3;
+    --text-bright: #FFFFFF;
+    --accent: #1DB954;
+    --accent-hover: #1ED760;
+    --accent-dim: rgba(29,185,84,0.15);
+    --sidebar-w: 240px;
+    --player-h: 90px;
+    --bottom-nav-h: 64px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    --transition: all 0.2s cubic-bezier(0.3, 0, 0, 1);
+    --font: 'DM Sans', sans-serif;
+  }
+
+  /* ===================== RESET & BASE ===================== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg-base);
+    color: var(--text-base);
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { border: none; background: none; cursor: pointer; font-family: var(--font); color: inherit; }
+  img { display: block; max-width: 100%; }
+  input { font-family: var(--font); }
+
+  /* ===================== SCROLLBAR ===================== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+  /* ===================== LAYOUT ===================== */
+  #app {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-rows: 1fr var(--player-h);
+    grid-template-areas:
+      "sidebar main"
+      "player  player";
+    height: 100vh;
+    gap: 8px;
+    padding: 8px;
+    padding-bottom: 0;
+  }
+
+  /* ===================== SIDEBAR ===================== */
+  #sidebar {
+    grid-area: sidebar;
+    background: var(--bg-sidebar);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 8px;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 20px; height: 20px; }
+  .logo-text { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-text span { color: var(--accent); }
+
+  .sidebar-nav { padding: 0 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem; font-weight: 500;
+    color: var(--text-subdued);
+    transition: var(--transition);
+    cursor: pointer;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { color: var(--text-base); }
+  .nav-item.active { color: var(--text-base); }
+  .nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+  .sidebar-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 10px 20px; }
+
+  .library-header {
+    padding: 10px 20px 4px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .library-label { font-size: 0.75rem; font-weight: 700; color: var(--text-subdued); letter-spacing: 0.08em; text-transform: uppercase; }
+  .library-add-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-subdued);
+    transition: var(--transition);
+  }
+  .library-add-btn:hover { color: var(--text-base); background: var(--bg-highlight); }
+  .library-add-btn svg { width: 16px; height: 16px; }
+
+  .playlist-list { padding: 4px 8px; flex: 1; overflow-y: auto; }
+  .playlist-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 1px;
+  }
+  .playlist-item:hover { background: var(--bg-highlight); }
+  .playlist-item.active { background: var(--bg-highlight); }
+  .playlist-name { font-size: 0.85rem; font-weight: 500; color: var(--text-subdued); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .playlist-item.active .playlist-name { color: var(--text-base); }
+  .playlist-meta { font-size: 0.75rem; color: var(--text-subdued); margin-top: 2px; }
+
+  .sidebar-footer {
+    padding: 12px 20px 4px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin-top: auto;
+  }
+  .sidebar-links { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+  .sidebar-link { font-size: 0.7rem; color: var(--text-subdued); transition: var(--transition); }
+  .sidebar-link:hover { color: var(--text-base); }
+
+  /* ===================== MAIN CONTENT ===================== */
+  #main {
+    grid-area: main;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .main-topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(26,26,26,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .nav-arrows { display: flex; gap: 6px; }
+  .nav-arrow-btn {
+    width: 32px; height: 32px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-base);
+    transition: var(--transition);
+  }
+  .nav-arrow-btn:hover { background: rgba(255,255,255,0.1); }
+  .nav-arrow-btn svg { width: 16px; height: 16px; }
+
+  .search-bar {
+    flex: 1; max-width: 340px;
+    background: var(--bg-highlight);
+    border-radius: var(--radius-full);
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    transition: var(--transition);
+  }
+  .search-bar:focus-within { background: #333; outline: 2px solid rgba(255,255,255,0.3); }
+  .search-bar svg { width: 16px; height: 16px; color: var(--text-subdued); flex-shrink: 0; }
+  .search-bar input {
+    background: none; border: none; outline: none;
+    color: var(--text-base); font-size: 0.875rem; width: 100%;
+  }
+  .search-bar input::placeholder { color: var(--text-subdued); }
+
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .topbar-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 700;
+    transition: var(--transition);
+  }
+  .topbar-btn.outline { border: 1px solid rgba(255,255,255,0.3); color: var(--text-base); }
+  .topbar-btn.outline:hover { border-color: #fff; transform: scale(1.03); }
+  .topbar-btn.filled { background: var(--accent); color: #000; }
+  .topbar-btn.filled:hover { background: var(--accent-hover); transform: scale(1.03); }
+  .avatar-btn {
+    width: 32px; height: 32px;
+    background: #535353;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    transition: var(--transition);
+  }
+  .avatar-btn:hover { background: #727272; transform: scale(1.05); }
+
+  /* ===================== HERO ===================== */
+  .hero-section {
+    background: linear-gradient(180deg, #1a3a2a 0%, var(--bg-elevated) 100%);
+    padding: 40px 24px 32px;
+  }
+  .hero-greeting { font-size: 0.875rem; color: var(--text-subdued); margin-bottom: 8px; }
+  .hero-title { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px; line-height: 1.15; }
+  .hero-title span { color: var(--accent); }
+  .hero-subtitle { font-size: 0.95rem; color: var(--text-subdued); max-width: 480px; line-height: 1.6; margin-bottom: 24px; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-btn {
+    padding: 12px 28px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    transition: var(--transition);
+  }
+  .hero-btn.primary { background: var(--accent); color: #000; }
+  .hero-btn.primary:hover { background: var(--accent-hover); transform: scale(1.03); }
+  .hero-btn.secondary { background: rgba(255,255,255,0.1); color: var(--text-base); }
+  .hero-btn.secondary:hover { background: rgba(255,255,255,0.2); transform: scale(1.03); }
+  .hero-btn svg { width: 18px; height: 18px; }
+
+  /* Quick Access Grid */
+  .quick-access {
+    padding: 28px 24px 12px;
+  }
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .quick-card {
+    background: var(--bg-highlight);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center;
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+  }
+  .quick-card:hover { background: #333; }
+  .quick-card:hover .quick-play { opacity: 1; transform: translateY(0); }
+  .quick-card-img {
+    width: 56px; height: 56px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .quick-card-img-placeholder {
+    width: 56px; height: 56px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  .quick-card-name { padding: 0 12px; font-size: 0.82rem; font-weight: 700; line-height: 1.3; }
+  .quick-play {
+    position: absolute; right: 10px;
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: var(--transition);
+  }
+  .quick-play svg { width: 16px; height: 16px; margin-left: 2px; }
+
+  /* ===================== SECTIONS ===================== */
+  .section { padding: 20px 24px 8px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; }
+  .section-all-link { font-size: 0.8rem; font-weight: 700; color: var(--text-subdued); letter-spacing: 0.05em; text-transform: uppercase; transition: var(--transition); }
+  .section-all-link:hover { color: var(--text-base); }
+
+  /* Horizontal scroll row */
+  .cards-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cards-row::-webkit-scrollbar { height: 0; }
+
+  /* Song card (trending) */
+  .song-card {
+    flex-shrink: 0;
+    width: 160px;
+    background: var(--bg-highlight);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    scroll-snap-align: start;
+    position: relative;
+    overflow: hidden;
+  }
+  .song-card:hover { background: #333; }
+  .song-card:hover .card-play-btn { opacity: 1; transform: translateY(0); }
+  .song-card-cover {
+    width: 100%; aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    background: var(--bg-press);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    overflow: hidden;
+  }
+  .song-card-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .card-play-btn {
+    position: absolute;
+    bottom: 72px; right: 14px;
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: var(--transition);
+  }
+  .card-play-btn:hover { background: var(--accent-hover); transform: scale(1.06) translateY(0) !important; }
+  .card-play-btn svg { width: 20px; height: 20px; margin-left: 2px; }
+  .card-title { font-size: 0.875rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+  .card-meta { font-size: 0.78rem; color: var(--text-subdued); display: flex; align-items: center; justify-content: space-between; }
+  .card-duration { font-size: 0.75rem; color: var(--text-subdued); }
+
+  /* Album card (bigger) */
+  .album-card {
+    flex-shrink: 0;
+    width: 200px;
+    background: var(--bg-highlight);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    scroll-snap-align: start;
+    position: relative;
+  }
+  .album-card:hover { background: #333; }
+  .album-card:hover .card-play-btn { opacity: 1; transform: translateY(0); }
+  .album-cover {
+    width: 100%; aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    overflow: hidden;
+    background: var(--bg-press);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem;
+  }
+  .album-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .album-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .album-meta { font-size: 0.78rem; color: var(--text-subdued); }
+
+  /* Radio / Playlist card */
+  .radio-card {
+    flex-shrink: 0;
+    width: 200px;
+    background: linear-gradient(135deg, #1a3a2a, #0d1f17);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(29,185,84,0.15);
+  }
+  .radio-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(29,185,84,0.12), transparent 60%);
+    pointer-events: none;
+  }
+  .radio-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); border-color: rgba(29,185,84,0.3); }
+  .radio-card:hover .card-play-btn { opacity: 1; transform: translateY(0); }
+  .radio-icon {
+    width: 60px; height: 60px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-dim);
+    border: 1px solid rgba(29,185,84,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 14px;
+  }
+  .radio-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; }
+  .radio-desc { font-size: 0.75rem; color: var(--text-subdued); line-height: 1.4; }
+
+  /* ===================== SUNO EMBED ===================== */
+  .embed-section { padding: 20px 24px; }
+  .embed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .embed-card {
+    background: var(--bg-highlight);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .embed-card:hover { border-color: rgba(29,185,84,0.3); }
+  .embed-header {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .embed-thumb {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .embed-info { flex: 1; min-width: 0; }
+  .embed-title { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .embed-artist { font-size: 0.78rem; color: var(--text-subdued); }
+  .embed-badge {
+    font-size: 0.65rem; font-weight: 700;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid rgba(29,185,84,0.3);
+    border-radius: var(--radius-full);
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
+  .embed-frame {
+    width: 100%; height: 160px;
+    border: none;
+    display: block;
+  }
+  .embed-placeholder {
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px;
+    background: rgba(0,0,0,0.3);
+    color: var(--text-subdued);
+    font-size: 0.85rem;
+  }
+  .embed-placeholder .suno-link-btn {
+    padding: 8px 18px;
+    background: var(--accent);
+    color: #000;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 700;
+    transition: var(--transition);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .embed-placeholder .suno-link-btn:hover { background: var(--accent-hover); }
+  .embed-placeholder .suno-link-btn svg { width: 14px; height: 14px; }
+
+  /* ===================== BOTTOM PADDING ===================== */
+  .main-bottom-pad { height: 24px; }
+
+  /* ===================== PLAYER ===================== */
+  #player {
+    grid-area: player;
+    background: var(--bg-player);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center;
+    padding: 0 16px;
+    gap: 16px;
+    height: var(--player-h);
+    z-index: 100;
+  }
+
+  .player-track { display: flex; align-items: center; gap: 14px; width: 30%; min-width: 180px; }
+  .player-thumb {
+    width: 56px; height: 56px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-highlight);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .player-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .player-track-info { min-width: 0; }
+  .player-track-name { font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .player-track-artist { font-size: 0.78rem; color: var(--text-subdued); }
+  .player-like-btn { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-subdued); transition: var(--transition); flex-shrink: 0; }
+  .player-like-btn:hover { color: var(--text-base); }
+  .player-like-btn.liked { color: var(--accent); }
+  .player-like-btn svg { width: 18px; height: 18px; }
+
+  .player-controls { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 720px; }
+  .player-btns { display: flex; align-items: center; gap: 16px; }
+  .ctrl-btn { color: var(--text-subdued); transition: var(--transition); display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+  .ctrl-btn:hover { color: var(--text-base); transform: scale(1.05); }
+  .ctrl-btn svg { width: 20px; height: 20px; }
+  .ctrl-btn.sm svg { width: 16px; height: 16px; }
+  .ctrl-btn.active { color: var(--accent); }
+  .play-pause-btn {
+    width: 36px; height: 36px;
+    background: var(--text-base);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #000;
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+  .play-pause-btn:hover { transform: scale(1.07); background: #e0e0e0; }
+  .play-pause-btn svg { width: 18px; height: 18px; }
+  .play-pause-btn.playing svg.play-icon { display: none; }
+  .play-pause-btn .pause-icon { display: none; }
+  .play-pause-btn.playing .pause-icon { display: block; }
+  .play-pause-btn.playing .play-icon { display: none; }
+
+  .player-progress { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .time-label { font-size: 0.7rem; color: var(--text-subdued); min-width: 32px; text-align: center; }
+  .progress-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; cursor: pointer; position: relative; transition: height 0.15s; }
+  .progress-bar:hover { height: 6px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; position: relative; transition: width 0.1s linear; }
+  .progress-fill::after {
+    content: '';
+    position: absolute; right: -5px; top: 50%; transform: translateY(-50%);
+    width: 10px; height: 10px;
+    background: var(--text-base);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .progress-bar:hover .progress-fill::after { opacity: 1; }
+
+  .player-right { display: flex; align-items: center; gap: 10px; width: 30%; justify-content: flex-end; min-width: 180px; }
+  .player-right .ctrl-btn svg { width: 18px; height: 18px; }
+  .volume-bar { width: 80px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; cursor: pointer; transition: height 0.15s; }
+  .volume-bar:hover { height: 6px; }
+  .volume-fill { height: 100%; background: var(--text-base); border-radius: 2px; width: 70%; transition: background 0.15s; }
+  .volume-bar:hover .volume-fill { background: var(--accent); }
+
+  /* ===================== BOTTOM NAV (Mobile) ===================== */
+  #bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-player);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    z-index: 200;
+    height: var(--bottom-nav-h);
+    padding: 0 8px;
+  }
+  .bottom-nav-inner { display: flex; height: 100%; }
+  .bnav-item {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    color: var(--text-subdued);
+    transition: var(--transition);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+  .bnav-item.active { color: var(--text-base); }
+  .bnav-item svg { width: 24px; height: 24px; }
+  .bnav-label { font-size: 0.65rem; font-weight: 500; }
+
+  /* Mobile mini player */
+  #mini-player {
+    display: none;
+    position: fixed;
+    bottom: var(--bottom-nav-h);
+    left: 8px; right: 8px;
+    background: #282828;
+    border-radius: 10px;
+    padding: 10px 14px;
+    z-index: 190;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+  }
+  .mini-thumb { width: 44px; height: 44px; border-radius: 6px; background: var(--bg-highlight); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
+  .mini-info { flex: 1; min-width: 0; }
+  .mini-title { font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini-artist { font-size: 0.75rem; color: var(--text-subdued); }
+  .mini-play { width: 36px; height: 36px; background: var(--text-base); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; flex-shrink: 0; }
+  .mini-play svg { width: 16px; height: 16px; }
+  .mini-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.1); border-radius: 0 0 10px 10px; overflow: hidden; }
+  .mini-progress-fill { height: 100%; background: var(--accent); width: 35%; }
+
+  /* ===================== TOAST ===================== */
+  #toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #333;
+    color: var(--text-base);
+    padding: 12px 20px;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem; font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===================== AUDIO ELEMENT ===================== */
+  #audio { display: none; }
+
+  /* ===================== LOADING ANIMATION ===================== */
+  @keyframes pulse-bar { 0%, 100% { height: 6px; } 50% { height: 18px; } }
+  .equalizer {
+    display: flex; align-items: center; gap: 2px; height: 20px;
+  }
+  .equalizer span {
+    display: inline-block;
+    width: 3px; background: var(--accent);
+    border-radius: 2px;
+    animation: pulse-bar 0.8s ease-in-out infinite;
+  }
+  .equalizer span:nth-child(2) { animation-delay: 0.15s; }
+  .equalizer span:nth-child(3) { animation-delay: 0.3s; }
+
+  /* ===================== SKELETON ===================== */
+  @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-highlight) 25%, #333 50%, var(--bg-highlight) 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width: 1024px) {
+    :root { --sidebar-w: 200px; }
+    .album-card { width: 170px; }
+    .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    #app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      grid-template-areas: "main";
+      padding: 0;
+      gap: 0;
+    }
+    #sidebar { display: none; }
+    #player { display: none; }
+    #bottom-nav { display: flex; }
+    #mini-player { display: flex; }
+    #main {
+      border-radius: 0;
+      padding-bottom: calc(var(--bottom-nav-h) + 70px);
+    }
+    .main-topbar { padding: 12px 16px; }
+    .hero-section { padding: 24px 16px; }
+    .hero-title { font-size: 1.6rem; }
+    .section { padding: 16px 16px 6px; }
+    .quick-section { padding: 16px 16px 6px; }
+    .quick-grid { grid-template-columns: repeat(2, 1fr); }
+    .embed-section { padding: 16px 16px; }
+    .embed-grid { grid-template-columns: 1fr; }
+    .topbar-btn { display: none; }
+    .nav-arrows { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .quick-grid { grid-template-columns: repeat(2, 1fr); }
+    .song-card { width: 140px; }
+    .album-card { width: 155px; }
+    .radio-card { width: 170px; }
+  }
+
+  /* ===================== SCROLLING TEXT ANIMATION ===================== */
+  @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .marquee-wrap { overflow: hidden; white-space: nowrap; }
+  .marquee-wrap.active span { display: inline-block; animation: marquee 8s linear infinite; padding-right: 40px; }
+
+  /* ===================== FADE IN ===================== */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp 0.5s ease forwards; }
+  .fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+  .fade-up-2 { animation-delay: 0.1s; opacity: 0; }
+  .fade-up-3 { animation-delay: 0.15s; opacity: 0; }
+  .fade-up-4 { animation-delay: 0.2s; opacity: 0; }
+</style>
+</head>
+<body>
+
+<audio id="audio"></audio>
+<div id="toast"></div>
+
+<div id="app">
+
+  <!-- ========= SIDEBAR ========= -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor" color="#000">
+          <path d="M12 3a9 9 0 100 18A9 9 0 0012 3zm4.13 12.97a.56.56 0 01-.78.19c-2.14-1.31-4.83-1.6-8-0.88a.56.56 0 01-.25-1.09c3.46-.79 6.44-.45 8.84 1.01a.56.56 0 01.19.77zm1.1-2.45a.7.7 0 01-.97.23c-2.45-1.51-6.18-1.94-9.07-1.06a.7.7 0 01-.41-1.34c3.3-.99 7.39-.52 10.22 1.2a.7.7 0 01.23.97zm.1-2.55C14.38 9.24 9.93 9.07 7.1 9.93a.84.84 0 01-.5-1.6c3.22-1 8.13-.8 11.33 1.26a.84.84 0 01-.7 1.52v-.14z"/>
+        </svg>
+      </div>
+      <div class="logo-text">Sound<span>Space</span></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showToast('Ana Sayfa')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.7 2.3a1 1 0 00-1.4 0l-9 8.5A1 1 0 003 12h1v9a1 1 0 001 1h5v-5h4v5h5a1 1 0 001-1v-9h1a1 1 0 00.7-1.7l-9-8z"/></svg>
+        Ana Sayfa
+      </div>
+      <div class="nav-item" onclick="showToast('Arama')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Ara
+      </div>
+      <div class="nav-item" onclick="showToast('Kütüphane')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h2v18H3zM7 3h2v18H7zM11 3l8 3v12l-8 3z"/></svg>
+        Kütüphanem
+      </div>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="library-header">
+      <span class="library-label">Çalma Listeleri</span>
+      <button class="library-add-btn" onclick="showToast('Çalma listesi oluştur')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/></svg>
+      </button>
+    </div>
+
+    <div class="playlist-list">
+      <div class="playlist-item active">
+        <div class="playlist-name">Beğenilen Şarkılar</div>
+        <div class="playlist-meta">Çalma Listesi · 28 şarkı</div>
+      </div>
+      <div class="playlist-item" onclick="showToast('Lo-fi Geceler')">
+        <div class="playlist-name">Lo-fi Geceler</div>
+        <div class="playlist-meta">Çalma Listesi · 12 şarkı</div>
+      </div>
+      <div class="playlist-item" onclick="showToast('Epic Sinematik')">
+        <div class="playlist-name">Epic Sinematik</div>
+        <div class="playlist-meta">Çalma Listesi · 8 şarkı</div>
+      </div>
+      <div class="playlist-item" onclick="showToast('Elektronik Vibes')">
+        <div class="playlist-name">Elektronik Vibes</div>
+        <div class="playlist-meta">Çalma Listesi · 15 şarkı</div>
+      </div>
+      <div class="playlist-item" onclick="showToast('Akustik Sessizlik')">
+        <div class="playlist-name">Akustik Sessizlik</div>
+        <div class="playlist-meta">Çalma Listesi · 9 şarkı</div>
+      </div>
+      <div class="playlist-item" onclick="showToast('Suno AI Seçmeleri')">
+        <div class="playlist-name">Suno AI Seçmeleri</div>
+        <div class="playlist-meta">Çalma Listesi · 20 şarkı</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-links">
+        <a class="sidebar-link" href="#">Yasal</a>
+        <a class="sidebar-link" href="#">Gizlilik Politikası</a>
+        <a class="sidebar-link" href="#">İletişim</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========= MAIN ========= -->
+  <main id="main">
+
+    <!-- Topbar -->
+    <div class="main-topbar">
+      <div class="nav-arrows">
+        <button class="nav-arrow-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 5L9 12l6.5 7"/></svg>
+        </button>
+        <button class="nav-arrow-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 5L15 12l-6.5 7"/></svg>
+        </button>
+      </div>
+
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Şarkı, sanatçı veya albüm ara…" id="searchInput">
+      </div>
+
+      <div class="topbar-right">
+        <button class="topbar-btn outline" onclick="showToast('Premium\'a yükselt!')">Premium\'a Geç</button>
+        <div class="avatar-btn" onclick="showToast('Profil')">SN</div>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero-section fade-up fade-up-1">
+      <div class="hero-greeting">Hoş geldiniz 👋</div>
+      <div class="hero-title">Benim <span>Müzik</span><br>Dünyama</div>
+      <div class="hero-subtitle">Suno AI ile ürettiğim orijinal müzikleri keşfedin. Lo-fi'dan epik sinematik müziğe, elektronikten akustiğe geniş bir evren sizi bekliyor.</div>
+      <div class="hero-actions">
+        <button class="hero-btn primary" onclick="playTrack(0)">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Şimdi Dinle
+        </button>
+        <button class="hero-btn secondary" onclick="showToast('Tüm müzikler yükleniyor…')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 12H9m3-3v6"/></svg>
+          Keşfet
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Access -->
+    <div class="quick-access fade-up fade-up-2">
+      <div class="quick-grid" id="quickGrid"></div>
+    </div>
+
+    <!-- Trending Songs -->
+    <section class="section fade-up fade-up-2">
+      <div class="section-header">
+        <div class="section-title">🔥 Trend Şarkılar</div>
+        <a class="section-all-link" href="#" onclick="showToast('Tümü gösteriliyor')">Tümünü Gör</a>
+      </div>
+      <div class="cards-row" id="trendingRow"></div>
+    </section>
+
+    <!-- Popular Albums -->
+    <section class="section fade-up fade-up-3">
+      <div class="section-header">
+        <div class="section-title">💿 Popüler Albümler & Single\'lar</div>
+        <a class="section-all-link" href="#" onclick="showToast('Albümler yükleniyor')">Tümünü Gör</a>
+      </div>
+      <div class="cards-row" id="albumsRow"></div>
+    </section>
+
+    <!-- Radio / Playlists -->
+    <section class="section fade-up fade-up-3">
+      <div class="section-header">
+        <div class="section-title">📻 Öne Çıkan Listeler</div>
+        <a class="section-all-link" href="#" onclick="showToast('Listeler yükleniyor')">Tümünü Gör</a>
+      </div>
+      <div class="cards-row" id="radioRow"></div>
+    </section>
+
+    <!-- Suno Embed Section -->
+    <div class="embed-section fade-up fade-up-4">
+      <div class="section-header">
+        <div class="section-title">🎵 Suno AI — Canlı Dinle</div>
+        <a class="section-all-link" href="https://suno.com" target="_blank">Suno\'da Görüntüle</a>
+      </div>
+      <p style="font-size:.875rem;color:var(--text-subdued);margin-bottom:4px;">Suno AI ile ürettiğim parçalar — direkt bu sayfadan dinleyebilirsiniz.</p>
+      <div class="embed-grid" id="embedGrid"></div>
+    </div>
+
+    <div class="main-bottom-pad"></div>
+  </main>
+
+  <!-- ========= PLAYER ========= -->
+  <footer id="player">
+    <div class="player-track">
+      <div class="player-thumb" id="playerThumb">🎵</div>
+      <div class="player-track-info">
+        <div class="player-track-name marquee-wrap" id="playerTitle"><span>Bir şarkı seçin</span></div>
+        <div class="player-track-artist" id="playerArtist">SoundSpace</div>
+      </div>
+      <button class="player-like-btn" id="likeBtn" onclick="toggleLike()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="likeIcon"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </button>
+    </div>
+
+    <div class="player-controls">
+      <div class="player-btns">
+        <button class="ctrl-btn sm" id="shuffleBtn" onclick="toggleShuffle()" title="Karıştır">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="prevTrack()" title="Önceki">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 20L9 12l10-8v16zM5 4h2v16H5z"/></svg>
+        </button>
+        <button class="play-pause-btn" id="playPauseBtn" onclick="togglePlay()">
+          <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="nextTrack()" title="Sonraki">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4zM19 4h-2v16h2z"/></svg>
+        </button>
+        <button class="ctrl-btn sm" id="repeatBtn" onclick="toggleRepeat()" title="Tekrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        </button>
+      </div>
+      <div class="player-progress">
+        <span class="time-label" id="currentTime">0:00</span>
+        <div class="progress-bar" id="progressBar" onclick="seekTo(event)">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <span class="time-label" id="totalTime">0:00</span>
+      </div>
+    </div>
+
+    <div class="player-right">
+      <button class="ctrl-btn" onclick="showToast('Kuyruk')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="volIcon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/></svg>
+      </button>
+      <div class="volume-bar" id="volumeBar" onclick="setVolume(event)">
+        <div class="volume-fill" id="volumeFill"></div>
+      </div>
+      <button class="ctrl-btn" onclick="showToast('Tam ekran')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>
+  </footer>
+
+</div><!-- /#app -->
+
+<!-- ========= BOTTOM NAV (Mobile) ========= -->
+<nav id="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bnav-item active" id="bnavHome">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.7 2.3a1 1 0 00-1.4 0l-9 8.5A1 1 0 003 12h1v9a1 1 0 001 1h5v-5h4v5h5a1 1 0 001-1v-9h1a1 1 0 00.7-1.7l-9-8z"/></svg>
+      <span class="bnav-label">Ana Sayfa</span>
+    </div>
+    <div class="bnav-item" id="bnavSearch" onclick="focusSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="bnav-label">Ara</span>
+    </div>
+    <div class="bnav-item" id="bnavLibrary" onclick="showToast('Kütüphane açılıyor…')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h2v18H3zM7 3h2v18H7zM11 3l8 3v12l-8 3z"/></svg>
+      <span class="bnav-label">Kütüphane</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ========= MINI PLAYER (Mobile) ========= -->
+<div id="mini-player">
+  <div class="mini-thumb" id="miniThumb">🎵</div>
+  <div class="mini-info">
+    <div class="mini-title" id="miniTitle">Bir şarkı seçin</div>
+    <div class="mini-artist" id="miniArtist">SoundSpace</div>
+  </div>
+  <button class="mini-play" onclick="togglePlay()">
+    <svg viewBox="0 0 24 24" fill="currentColor" id="miniPlayIcon"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <div class="mini-progress"><div class="mini-progress-fill" id="miniProgressFill"></div></div>
+</div>
+
+<script>
+// ======================== DATA ========================
+const ARTIST = 'SoundSpace';
+
+const tracks = [
+  { id:1, title:'Midnight Drift', genre:'Lo-fi', duration:'3:42', emoji:'🌙', color:'#1a1a3a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:2, title:'Solar Eclipse', genre:'Sinematik', duration:'4:15', emoji:'🌑', color:'#2a1a0a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:3, title:'Neon Rain', genre:'Elektronik', duration:'3:58', emoji:'🌧️', color:'#0a1a2a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:4, title:'Forest Breath', genre:'Akustik', duration:'2:55', emoji:'🌲', color:'#0a2a0a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:5, title:'Deep Space', genre:'Ambient', duration:'5:20', emoji:'🚀', color:'#1a0a2a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:6, title:'Broken Code', genre:'Glitch', duration:'3:11', emoji:'💾', color:'#2a0a0a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:7, title:'Golden Hour', genre:'Indie Pop', duration:'3:33', emoji:'🌅', color:'#2a1a00', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:8, title:'Storm Chaser', genre:'Orkestral', duration:'4:44', emoji:'⚡', color:'#1a1a1a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+];
+
+const albums = [
+  { id:1, title:'Gece Koleksiyonu', year:'2024', count:'8 şarkı', emoji:'🌙' },
+  { id:2, title:'Evren Sesleri', year:'2024', count:'6 şarkı', emoji:'🌌' },
+  { id:3, title:'Doğa Ritmi', year:'2023', count:'9 şarkı', emoji:'🍃' },
+  { id:4, title:'Dijital Rüyalar', year:'2024', count:'7 şarkı', emoji:'💻' },
+  { id:5, title:'Sessiz Fırtına', year:'2023', count:'5 şarkı', emoji:'🌊' },
+];
+
+const radios = [
+  { id:1, title:'Benim Şarkılarım Radyosu', desc:'Kendi ürettiğim tüm parçalar, kesintisiz.', emoji:'📡', color:'#1a3a2a' },
+  { id:2, title:'Lo-fi & Chill', desc:'Rahatlatıcı lo-fi karışımı.', emoji:'☁️', color:'#1a2a3a' },
+  { id:3, title:'Epik Sinematik', desc:'Film müziği tadında seçmeler.', emoji:'🎬', color:'#3a1a2a' },
+  { id:4, title:'Elektronik Akşamlar', desc:'Beat\'li, ritmik elektronik parçalar.', emoji:'🎛️', color:'#1a1a3a' },
+];
+
+const quickAccess = [
+  { title:'Beğenilen Şarkılar', emoji:'💚', trackIdx:0 },
+  { title:'Lo-fi Geceler', emoji:'🌙', trackIdx:3 },
+  { title:'Suno Seçmeleri', emoji:'✨', trackIdx:1 },
+  { title:'En Çok Dinlenen', emoji:'🔥', trackIdx:2 },
+  { title:'Yeni Çıkanlar', emoji:'🆕', trackIdx:4 },
+  { title:'Rastgele Çal', emoji:'🎲', trackIdx:5 },
+];
+
+const sunoEmbeds = [
+  { title:'Midnight Drift', artist:ARTIST, emoji:'🌙', sunoId:'midnight-drift', sunoUrl:'https://suno.com' },
+  { title:'Neon Rain', artist:ARTIST, emoji:'🌧️', sunoId:'neon-rain', sunoUrl:'https://suno.com' },
+  { title:'Forest Breath', artist:ARTIST, emoji:'🌲', sunoId:'forest-breath', sunoUrl:'https://suno.com' },
+];
+
+// ======================== STATE ========================
+let currentTrack = null;
+let isPlaying = false;
+let isLiked = false;
+let isShuffle = false;
+let isRepeat = false;
+let isMuted = false;
+let volume = 0.7;
+let currentTrackIdx = 0;
+let audioInterval = null;
+let simulatedTime = 0;
+let simulatedDuration = 220;
+
+const audio = document.getElementById('audio');
+
+// ======================== RENDER ========================
+function renderQuick() {
+  const grid = document.getElementById('quickGrid');
+  grid.innerHTML = quickAccess.map((q, i) => `
+    <div class="quick-card" onclick="playTrack(${q.trackIdx})" style="background:var(--bg-highlight)">
+      <div class="quick-card-img-placeholder" style="background:rgba(255,255,255,0.05)">${q.emoji}</div>
+      <div class="quick-card-name">${q.title}</div>
+      <div class="quick-play">
+        <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTrending() {
+  const row = document.getElementById('trendingRow');
+  row.innerHTML = tracks.map((t, i) => `
+    <div class="song-card" onclick="playTrack(${i})">
+      <div class="song-card-cover" style="background:${t.color}">${t.emoji}</div>
+      <div class="card-play-btn" onclick="event.stopPropagation();playTrack(${i})">
+        <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="card-title">${t.title}</div>
+      <div class="card-meta">
+        <span>${t.genre}</span>
+        <span class="card-duration">${t.duration}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAlbums() {
+  const row = document.getElementById('albumsRow');
+  row.innerHTML = albums.map((a, i) => `
+    <div class="album-card" onclick="showToast('${a.title} açılıyor…')">
+      <div class="album-cover" style="background:linear-gradient(135deg,#1a2a1a,#0a0a0a)">${a.emoji}</div>
+      <div class="card-play-btn">
+        <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="album-title">${a.title}</div>
+      <div class="album-meta">${a.year} · ${a.count}</div>
+    </div>
+  `).join('');
+}
+
+function renderRadio() {
+  const row = document.getElementById('radioRow');
+  row.innerHTML = radios.map((r, i) => `
+    <div class="radio-card" onclick="showToast('${r.title} başlatılıyor…')">
+      <div class="radio-icon">${r.emoji}</div>
+      <div class="card-play-btn">
+        <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="radio-title">${r.title}</div>
+      <div class="radio-desc">${r.desc}</div>
+    </div>
+  `).join('');
+}
+
+function renderEmbeds() {
+  const grid = document.getElementById('embedGrid');
+  grid.innerHTML = sunoEmbeds.map((e, i) => `
+    <div class="embed-card">
+      <div class="embed-header">
+        <div class="embed-thumb" style="background:rgba(29,185,84,0.1)">${e.emoji}</div>
+        <div class="embed-info">
+          <div class="embed-title">${e.title}</div>
+          <div class="embed-artist">${e.artist}</div>
+        </div>
+        <span class="embed-badge">SUNO AI</span>
+      </div>
+      ${e.sunoEmbed
+        ? `<iframe src="${e.sunoEmbed}" class="embed-frame" allow="autoplay" loading="lazy"></iframe>`
+        : `<div class="embed-placeholder">
+            <span style="font-size:0.8rem;color:var(--text-subdued)">Suno AI'da dinlemek için tıklayın</span>
+            <a href="${e.sunoUrl}" target="_blank" class="suno-link-btn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 100 18A9 9 0 0012 3zm4.13 12.97a.56.56 0 01-.78.19c-2.14-1.31-4.83-1.6-8-.88a.56.56 0 01-.25-1.09c3.46-.79 6.44-.45 8.84 1.01a.56.56 0 01.19.77zm1.1-2.45a.7.7 0 01-.97.23c-2.45-1.51-6.18-1.94-9.07-1.06a.7.7 0 01-.41-1.34c3.3-.99 7.39-.52 10.22 1.2a.7.7 0 01.23.97zm.1-2.55C14.38 9.24 9.93 9.07 7.1 9.93a.84.84 0 01-.5-1.6c3.22-1 8.13-.8 11.33 1.26a.84.84 0 01-.7 1.52v-.14z"/></svg>
+              Suno\'da Dinle
+            </a>
+          </div>`
+      }
+    </div>
+  `).join('');
+}
+
+// ======================== PLAYER LOGIC ========================
+function playTrack(idx) {
+  currentTrackIdx = idx;
+  const t = tracks[idx];
+  currentTrack = t;
+  isPlaying = true;
+  simulatedTime = 0;
+  simulatedDuration = parseDuration(t.duration);
+
+  // Update UI
+  document.getElementById('playerThumb').textContent = t.emoji;
+  document.getElementById('playerTitle').querySelector('span').textContent = t.title;
+  document.getElementById('playerArtist').textContent = ARTIST + ' · ' + t.genre;
+  document.getElementById('miniThumb').textContent = t.emoji;
+  document.getElementById('miniTitle').textContent = t.title;
+  document.getElementById('miniArtist').textContent = ARTIST;
+  document.getElementById('totalTime').textContent = t.duration;
+  document.getElementById('playPauseBtn').classList.add('playing');
+  document.getElementById('miniPlayIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+  startProgress();
+  showToast(`▶ ${t.title} çalınıyor`);
+
+  // Attempt real audio if MP3 available (placeholder)
+  // audio.src = `music/${t.id}.mp3`;
+  // audio.play().catch(()=>{});
+}
+
+function parseDuration(str) {
+  const [m, s] = str.split(':').map(Number);
+  return m * 60 + s;
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function startProgress() {
+  clearInterval(audioInterval);
+  audioInterval = setInterval(() => {
+    if (!isPlaying) return;
+    simulatedTime += 1;
+    if (simulatedTime >= simulatedDuration) {
+      if (isRepeat) { simulatedTime = 0; }
+      else { nextTrack(); return; }
+    }
+    const pct = (simulatedTime / simulatedDuration) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('miniProgressFill').style.width = pct + '%';
+    document.getElementById('currentTime').textContent = formatTime(simulatedTime);
+  }, 1000);
+}
+
+function togglePlay() {
+  if (!currentTrack) { playTrack(0); return; }
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('playPauseBtn');
+  if (isPlaying) {
+    btn.classList.add('playing');
+    document.getElementById('miniPlayIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    startProgress();
+  } else {
+    btn.classList.remove('playing');
+    document.getElementById('miniPlayIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+  }
+}
+
+function nextTrack() {
+  const next = isShuffle
+    ? Math.floor(Math.random() * tracks.length)
+    : (currentTrackIdx + 1) % tracks.length;
+  playTrack(next);
+}
+
+function prevTrack() {
+  if (simulatedTime > 5) { simulatedTime = 0; return; }
+  const prev = (currentTrackIdx - 1 + tracks.length) % tracks.length;
+  playTrack(prev);
+}
+
+function seekTo(e) {
+  const bar = document.getElementById('progressBar');
+  const rect = bar.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  simulatedTime = pct * simulatedDuration;
+  document.getElementById('progressFill').style.width = (pct * 100) + '%';
+  document.getElementById('currentTime').textContent = formatTime(simulatedTime);
+}
+
+function setVolume(e) {
+  const bar = document.getElementById('volumeBar');
+  const rect = bar.getBoundingClientRect();
+  volume = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  document.getElementById('volumeFill').style.width = (volume * 100) + '%';
+  isMuted = volume === 0;
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  const icon = document.getElementById('volIcon');
+  if (isMuted) {
+    document.getElementById('volumeFill').style.width = '0%';
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2"/><line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2"/>';
+  } else {
+    document.getElementById('volumeFill').style.width = (volume * 100) + '%';
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>';
+  }
+}
+
+function toggleLike() {
+  isLiked = !isLiked;
+  const btn = document.getElementById('likeBtn');
+  const icon = document.getElementById('likeIcon');
+  if (isLiked) {
+    btn.classList.add('liked');
+    icon.setAttribute('fill', 'var(--accent)');
+    icon.setAttribute('stroke', 'var(--accent)');
+    showToast('Beğenilenlere eklendi 💚');
+  } else {
+    btn.classList.remove('liked');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    showToast('Beğenilenlerden kaldırıldı');
+  }
+}
+
+function toggleShuffle() {
+  isShuffle = !isShuffle;
+  document.getElementById('shuffleBtn').classList.toggle('active', isShuffle);
+  showToast(isShuffle ? 'Karıştırma açık' : 'Karıştırma kapalı');
+}
+
+function toggleRepeat() {
+  isRepeat = !isRepeat;
+  document.getElementById('repeatBtn').classList.toggle('active', isRepeat);
+  showToast(isRepeat ? 'Tekrar açık' : 'Tekrar kapalı');
+}
+
+// ======================== TOAST ========================
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ======================== SEARCH ========================
+function focusSearch() {
+  document.getElementById('searchInput').focus();
+  document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) return;
+  const found = tracks.filter(t => t.title.toLowerCase().includes(q) || t.genre.toLowerCase().includes(q));
+  if (found.length) showToast(`🔍 "${found[0].title}" bulundu`);
+});
+
+// ======================== VOLUME BAR DRAG ========================
+let draggingVolume = false;
+document.getElementById('volumeBar').addEventListener('mousedown', () => draggingVolume = true);
+document.addEventListener('mousemove', (e) => {
+  if (!draggingVolume) return;
+  const bar = document.getElementById('volumeBar');
+  const rect = bar.getBoundingClientRect();
+  volume = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  document.getElementById('volumeFill').style.width = (volume * 100) + '%';
+});
+document.addEventListener('mouseup', () => draggingVolume = false);
+
+// ======================== PROGRESS BAR DRAG ========================
+let draggingProgress = false;
+document.getElementById('progressBar').addEventListener('mousedown', (e) => {
+  draggingProgress = true; seekTo(e);
+});
+document.addEventListener('mousemove', (e) => {
+  if (!draggingProgress || !currentTrack) return;
+  seekTo(e);
+});
+document.addEventListener('mouseup', () => draggingProgress = false);
+
+// ======================== KEYBOARD SHORTCUTS ========================
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') nextTrack();
+  if (e.code === 'ArrowLeft') prevTrack();
+  if (e.code === 'KeyM') toggleMute();
+});
+
+// ======================== INIT ========================
+renderQuick();
+renderTrending();
+renderAlbums();
+renderRadio();
+renderEmbeds();
+
+// Volume init
+document.getElementById('volumeFill').style.width = (volume * 100) + '%';
+
+// PWA Service Worker (minimal)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('#').catch(() => {});
+}
+</script>
+</body>
+</html>
