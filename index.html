@@ -968,14 +968,12 @@
 const ARTIST = 'mbofis03';
 
 const tracks = [
-  { id:1, title:'Kalk Yiğidim 04a', genre:'Türkü / Epik', duration:'3:30', emoji:'⚔️', color:'#3a1a0a', sunoUrl:'https://suno.com/song/05bc9901-81ac-4337-9f2b-78ccf607a65b?sh=CLzNeuVVyge8I5Ce', sunoEmbed:'https://suno.com/embed/05bc9901-81ac-4337-9f2b-78ccf607a65b' },
-  { id:2, title:'Solar Eclipse', genre:'Sinematik', duration:'4:15', emoji:'🌑', color:'#2a1a0a', sunoUrl:'https://suno.com', sunoEmbed:'' },
-  { id:3, title:'Neon Rain', genre:'Elektronik', duration:'3:58', emoji:'🌧️', color:'#0a1a2a', sunoUrl:'https://suno.com', sunoEmbed:'' },
-  { id:4, title:'Forest Breath', genre:'Akustik', duration:'2:55', emoji:'🌲', color:'#0a2a0a', sunoUrl:'https://suno.com', sunoEmbed:'' },
-  { id:5, title:'Deep Space', genre:'Ambient', duration:'5:20', emoji:'🚀', color:'#1a0a2a', sunoUrl:'https://suno.com', sunoEmbed:'' },
-  { id:6, title:'Broken Code', genre:'Glitch', duration:'3:11', emoji:'💾', color:'#2a0a0a', sunoUrl:'https://suno.com', sunoEmbed:'' },
-  { id:7, title:'Golden Hour', genre:'Indie Pop', duration:'3:33', emoji:'🌅', color:'#2a1a00', sunoUrl:'https://suno.com', sunoEmbed:'' },
-  { id:8, title:'Storm Chaser', genre:'Orkestral', duration:'4:44', emoji:'⚡', color:'#1a1a1a', sunoUrl:'https://suno.com', sunoEmbed:'' },
+  { id:1, title:'Kalk Yiğidim 04a', genre:'Türkü / Epik', duration:'0:00', emoji:'⚔️', color:'#3a1a0a', mp3:'music/Kalk Yiğidim 04a (1).mp3' },
+  { id:2, title:'Işık Ordusu', genre:'Epik', duration:'0:00', emoji:'✨', color:'#2a2a0a', mp3:'music/Işık Ordusu02.mp3' },
+  { id:3, title:'Mavi', genre:'Ambient', duration:'0:00', emoji:'🌊', color:'#0a1a3a', mp3:'music/Mavi .mp3' },
+  { id:4, title:'Ak Kara', genre:'Sinematik', duration:'0:00', emoji:'🖤', color:'#1a1a1a', mp3:'music/Ak Kara 04.mp3' },
+  { id:5, title:'Aşk', genre:'Duygusal', duration:'0:00', emoji:'❤️', color:'#3a0a0a', mp3:'music/Aşk.mp3' },
+  { id:6, title:'Aşık Atışması', genre:'Halk Müziği', duration:'0:00', emoji:'🎸', color:'#1a2a0a', mp3:'music/aşık atışması 01.mp3' },
 ];
 
 const albums = [
@@ -1003,15 +1001,12 @@ const quickAccess = [
 ];
 
 const sunoEmbeds = [
-  { 
-    title:'Kalk Yiğidim 04a', 
-    artist:'mbofis03', 
-    emoji:'⚔️', 
-    sunoEmbed:'https://suno.com/embed/05bc9901-81ac-4337-9f2b-78ccf607a65b',
-    sunoUrl:'https://suno.com/song/05bc9901-81ac-4337-9f2b-78ccf607a65b?sh=CLzNeuVVyge8I5Ce'
-  },
-  // Buraya yeni şarkılarını ekle ↓
-  // { title:'Şarkı Adı', artist:'mbofis03', emoji:'🎵', sunoEmbed:'https://suno.com/embed/ID', sunoUrl:'https://suno.com/song/ID' },
+  { title:'Kalk Yiğidim 04a', artist:'mbofis03', emoji:'⚔️', trackIdx:0 },
+  { title:'Işık Ordusu', artist:'mbofis03', emoji:'✨', trackIdx:1 },
+  { title:'Mavi', artist:'mbofis03', emoji:'🌊', trackIdx:2 },
+  { title:'Ak Kara', artist:'mbofis03', emoji:'🖤', trackIdx:3 },
+  { title:'Aşk', artist:'mbofis03', emoji:'❤️', trackIdx:4 },
+  { title:'Aşık Atışması', artist:'mbofis03', emoji:'🎸', trackIdx:5 },
 ];
 
 // ======================== STATE ========================
@@ -1121,7 +1116,6 @@ function playTrack(idx) {
   currentTrack = t;
   isPlaying = true;
   simulatedTime = 0;
-  simulatedDuration = parseDuration(t.duration);
 
   // Update UI
   document.getElementById('playerThumb').textContent = t.emoji;
@@ -1130,16 +1124,21 @@ function playTrack(idx) {
   document.getElementById('miniThumb').textContent = t.emoji;
   document.getElementById('miniTitle').textContent = t.title;
   document.getElementById('miniArtist').textContent = ARTIST;
-  document.getElementById('totalTime').textContent = t.duration;
   document.getElementById('playPauseBtn').classList.add('playing');
   document.getElementById('miniPlayIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 
-  startProgress();
-  showToast(`▶ ${t.title} çalınıyor`);
+  // Real MP3 playback
+  audio.src = t.mp3;
+  audio.volume = isMuted ? 0 : volume;
+  audio.play().catch(e => showToast('⚠️ Ses yüklenemedi'));
 
-  // Attempt real audio if MP3 available (placeholder)
-  // audio.src = `music/${t.id}.mp3`;
-  // audio.play().catch(()=>{});
+  audio.onloadedmetadata = () => {
+    simulatedDuration = audio.duration;
+    document.getElementById('totalTime').textContent = formatTime(audio.duration);
+  };
+
+  showToast('▶ ' + t.title + ' çalınıyor');
+  startProgress();
 }
 
 function parseDuration(str) {
@@ -1156,17 +1155,17 @@ function formatTime(sec) {
 function startProgress() {
   clearInterval(audioInterval);
   audioInterval = setInterval(() => {
-    if (!isPlaying) return;
-    simulatedTime += 1;
-    if (simulatedTime >= simulatedDuration) {
-      if (isRepeat) { simulatedTime = 0; }
-      else { nextTrack(); return; }
-    }
-    const pct = (simulatedTime / simulatedDuration) * 100;
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
     document.getElementById('progressFill').style.width = pct + '%';
     document.getElementById('miniProgressFill').style.width = pct + '%';
-    document.getElementById('currentTime').textContent = formatTime(simulatedTime);
-  }, 1000);
+    document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+  }, 500);
+
+  audio.onended = () => {
+    if (isRepeat) { audio.currentTime = 0; audio.play(); }
+    else { nextTrack(); }
+  };
 }
 
 function togglePlay() {
@@ -1176,10 +1175,12 @@ function togglePlay() {
   if (isPlaying) {
     btn.classList.add('playing');
     document.getElementById('miniPlayIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    audio.play().catch(()=>{});
     startProgress();
   } else {
     btn.classList.remove('playing');
     document.getElementById('miniPlayIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+    audio.pause();
   }
 }
 
@@ -1197,12 +1198,13 @@ function prevTrack() {
 }
 
 function seekTo(e) {
+  if (!audio.duration) return;
   const bar = document.getElementById('progressBar');
   const rect = bar.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  simulatedTime = pct * simulatedDuration;
+  audio.currentTime = pct * audio.duration;
   document.getElementById('progressFill').style.width = (pct * 100) + '%';
-  document.getElementById('currentTime').textContent = formatTime(simulatedTime);
+  document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
 }
 
 function setVolume(e) {
@@ -1210,11 +1212,13 @@ function setVolume(e) {
   const rect = bar.getBoundingClientRect();
   volume = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   document.getElementById('volumeFill').style.width = (volume * 100) + '%';
+  audio.volume = volume;
   isMuted = volume === 0;
 }
 
 function toggleMute() {
   isMuted = !isMuted;
+  audio.muted = isMuted;
   const icon = document.getElementById('volIcon');
   if (isMuted) {
     document.getElementById('volumeFill').style.width = '0%';
